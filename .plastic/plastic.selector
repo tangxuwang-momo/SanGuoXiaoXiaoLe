@@ -1,0 +1,4 @@
+repository "SanGuoXiaoXiaoLe@ssl://wechat_os_qy01ybvg9n5sln-xpzafcmyby@sh01-plasticscm.unity.cn:8787"
+  path "/"
+    smartbranch "/main/tangxuwanggame" 
+     
