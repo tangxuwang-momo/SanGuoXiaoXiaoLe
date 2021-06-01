@@ -9,6 +9,13 @@ public class GameScene : MonoBehaviour
     public ResourcesData resourcesData;
     bool isTouch = false;
     Vector3 touPos;
+    bool canMove = false;           //选中格子是否在移动
+    GameObject chooseNode;
+    Vector3 newPos = new Vector3(0, 0, 0);
+    int speed = 10;
+
+    int xiaoAni = 0;
+    float moveTime = 1;
 
     // Start is called before the first frame update
     void Start()
@@ -35,6 +42,24 @@ public class GameScene : MonoBehaviour
         }
         else{
             //Debug.Log("点击的是屏幕（非Button属性的）");
+        }
+
+        if(xiaoAni > 0){
+            removeAllXNode();
+            return;
+        }
+
+        if(canMove){
+            chooseNode.transform.position = Vector3.MoveTowards(chooseNode.transform.position, newPos, speed * Time.deltaTime);
+
+            if(chooseNode.transform.position == newPos){
+                moveTime = 1;
+                xiaoAni++;
+                calcAllXNode(); //计算所有可消除点
+                removeAllXNode();
+                canMove = false;
+            }
+            return;
         }
 
         if(isTouchStart()){
@@ -66,10 +91,8 @@ public class GameScene : MonoBehaviour
             }
             //移动格子
             else if(GameData.Instance.GameStep == (int)AllGameStep.gameing){
-                bool canMove = false;
-                Vector3 newPos = new Vector3(0, 0, 0);
                 Vector3 newIndexPos = new Vector3(0, 0, 0);
-                GameObject chooseNode = GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y), (int)(GameData.Instance.ChoosePos.x)];
+                chooseNode = GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y), (int)(GameData.Instance.ChoosePos.x)];
                 Vector3 oldPos = chooseNode.transform.position;
                 //上
                 if(GameData.Instance.ChoosePos.y + 1 < GameData.heightCnt && GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y + 1), (int)(GameData.Instance.ChoosePos.x)] == null){
@@ -103,11 +126,6 @@ public class GameScene : MonoBehaviour
                     GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y), (int)(GameData.Instance.ChoosePos.x)] = null;
                     chooseNode.gameObject.GetComponent<TouchNode>().Pos = newIndexPos;
                     GameData.Instance.ChoosePos = newIndexPos;
-                    chooseNode.transform.position = newPos;//Vector3.MoveTowards(oldPos, newPos, 0.1f);
-
-                    calcAllXNode();
-
-                    int x = 1;
                 }
             }
         }
@@ -199,14 +217,14 @@ public class GameScene : MonoBehaviour
         int xIndex = 0;
         int calcNode = -1;
         int calcCnt = 0;
-        TouchNode touchNode = new TouchNode();
+        TouchNode touchNode = null;// = new TouchNode();
 
         for(int y = 0; y < GameData.heightCnt; y++){
             calcNode = -1;
             calcCnt = 0;
-            bool calcNow = false;
-            bool isNullNode = false;
             for(int x = 0; x < GameData.widthCnt; x++){
+                bool calcNow = false;
+                bool isNullNode = false;
                 if(GameData.Instance.allTouchNode[y,x] == null){
                     calcNow = true;
                     isNullNode = true;
@@ -246,13 +264,18 @@ public class GameScene : MonoBehaviour
                             calcNodeType = (int)AllNodeType.wuXing;
                         }
                         GameData.Instance.allXNode[xIndex] = new XiaoNode(allXPos, calcNodeType);
+                        Vector3 startPos = GameData.Instance.allTouchNode[(int)(allXPos[0].y), (int)(allXPos[0].x)].transform.position;
+                        Vector3 endPos = GameData.Instance.allTouchNode[(int)(allXPos[posIndex-1].y), (int)(allXPos[posIndex-1].x)].transform.position;
+                        GameData.Instance.allXNode[xIndex].m_centerPos = new Vector3((startPos.x + endPos.x) / 2, (startPos.y + endPos.y) / 2, 0);
                     }
                     if(isNullNode){
                         calcNode = -1;
                         calcCnt = 0;
                     }
                     else{
-                        calcNode = touchNode.Index;
+                        if(touchNode){
+                            calcNode = touchNode.Index;
+                        }
                         calcCnt = 1;
                     }
                 }
@@ -262,9 +285,9 @@ public class GameScene : MonoBehaviour
         for(int x = 0; x < GameData.widthCnt; x++){
             calcNode = -1;
             calcCnt = 0;
-            bool calcNow = false;
-            bool isNullNode = false;
             for(int y = 0; y < GameData.heightCnt; y++){
+                bool calcNow = false;
+                bool isNullNode = false;
                 if(GameData.Instance.allTouchNode[y,x] == null){
                     calcNow = true;
                     isNullNode = true;
@@ -300,6 +323,7 @@ public class GameScene : MonoBehaviour
                         Vector3[] allXPos = new Vector3[10];
                         int calcNodeType = (int)AllNodeType.sanXing;
                         int posIndex = 0;
+                        Vector3 centerPos = new Vector3();
                         if (calcXIndex == 0){
                             calcXIndex = ++xIndex;
 
@@ -314,6 +338,10 @@ public class GameScene : MonoBehaviour
                             else if(calcCnt == 5){
                                 calcNodeType = (int)AllNodeType.wuXing;
                             }
+
+                            Vector3 startPos = GameData.Instance.allTouchNode[(int)(allXPos[0].y), (int)(allXPos[0].x)].transform.position;
+                            Vector3 endPos = GameData.Instance.allTouchNode[(int)(allXPos[posIndex-1].y), (int)(allXPos[posIndex-1].x)].transform.position;
+                            centerPos = new Vector3((startPos.x + endPos.x) / 2, (startPos.y + endPos.y) / 2, 0);
                         }
                         else{
                             for(int i = 0; i < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType]; i++){
@@ -323,7 +351,10 @@ public class GameScene : MonoBehaviour
                                 if(allNode[y - i,x] == 0){
                                     allNode[y - i,x] = calcXIndex;
                                     allXPos[posIndex++] = new Vector3(x, y - i, 0);
-                                }      
+                                }
+                                else{
+                                    centerPos = GameData.Instance.allTouchNode[y - i, x].transform.position;
+                                }
                             }
 
                             if(calcCnt + GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType] - 1 == 5){
@@ -338,6 +369,7 @@ public class GameScene : MonoBehaviour
                         }
                             
                         GameData.Instance.allXNode[xIndex] = new XiaoNode(allXPos, calcNodeType);
+                        GameData.Instance.allXNode[xIndex].m_centerPos = centerPos;
                     }
                     if(isNullNode){
                         calcNode = -1;
@@ -353,4 +385,27 @@ public class GameScene : MonoBehaviour
         GameData.Instance.CalcXNodeIndex = xIndex;
     }
 
+    void removeAllXNode(){
+        bool isEnd = true;
+        for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
+            for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+                Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
+                GameObject touchNode = GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x];
+                if(touchNode == null){
+                    continue;
+                }
+                else{
+                    isEnd = false;
+                }
+                touchNode.transform.position = Vector3.MoveTowards(touchNode.transform.position, GameData.Instance.allXNode[i].m_centerPos, speed * Time.deltaTime); 
+                if(touchNode.transform.position == GameData.Instance.allXNode[i].m_centerPos){
+                    Destroy(touchNode);
+                    GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x] = null;
+                } 
+            }
+        }
+        if(isEnd){
+            xiaoAni --;
+        }
+    }
 }
