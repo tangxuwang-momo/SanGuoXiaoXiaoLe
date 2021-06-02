@@ -32,6 +32,12 @@ public class GameScene : MonoBehaviour
     {
         if(GameData.Instance.GameStep == (int)AllGameStep.initGame){
             createAllNode();
+            calcAllXNode();
+            while(GameData.Instance.CalcXNodeIndex > 0){
+                removeAllXNodeStr();
+                calcAllXNode();
+            }
+
             GameData.Instance.allTouchNode[GameData.heightCnt / 2, GameData.widthCnt / 2].gameObject.GetComponent<TouchNode>().setLight(true);
             GameData.Instance.GameStep = (int)AllGameStep.chooseQiDian;
             return;
@@ -200,15 +206,19 @@ public class GameScene : MonoBehaviour
     void createAllNode(){
         for(int y = 0; y < GameData.heightCnt; y++){
             for(int x = 0; x < GameData.widthCnt; x++){
-                Vector3 livePos = new Vector3((float)(x - GameData.widthCnt / 2 + 0.5), (float)(y - GameData.heightCnt / 2 + 0.5), 0);
-                int random = UnityEngine.Random.Range(1, GameData.maxPlayer);
-                GameObject newNode = resourcesData.createPlayerNode(random, livePos);
-                GameData.Instance.allTouchNode[y,x] = newNode;
-                TouchNode touchNode = GameData.Instance.allTouchNode[y,x].gameObject.GetComponent<TouchNode>();
-                touchNode.Pos = new Vector3(x, y, 0);
-                touchNode.Index = random;
+                createNewNode(x, y);
             }
         }
+    }
+
+    void createNewNode(int x, int y){
+        Vector3 livePos = new Vector3((float)(x - GameData.widthCnt / 2 + 0.5), (float)(y - GameData.heightCnt / 2 + 0.5), 0);
+        int random = UnityEngine.Random.Range(1, GameData.maxPlayer);
+        GameObject newNode = resourcesData.createPlayerNode(random, livePos);
+        GameData.Instance.allTouchNode[y,x] = newNode;
+        TouchNode touchNode = GameData.Instance.allTouchNode[y,x].gameObject.GetComponent<TouchNode>();
+        touchNode.Pos = new Vector3(x, y, 0);
+        touchNode.Index = random;
     }
 
     void calcAllXNode(){
@@ -405,7 +415,27 @@ public class GameScene : MonoBehaviour
             }
         }
         if(isEnd){
+            for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
+                for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+                    Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
+                    createNewNode((int)tochNodePos.x, (int)tochNodePos.y);
+                }
+            }
             xiaoAni --;
+            GameData.Instance.CalcXNodeIndex = 0;
         }
+    }
+
+    void removeAllXNodeStr(){
+        for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
+            for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+                Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
+                GameObject touchNode = GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x];
+                Destroy(touchNode);
+                GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x] = null;
+                createNewNode((int)tochNodePos.x, (int)tochNodePos.y);
+            }
+        }
+        GameData.Instance.CalcXNodeIndex = 0;
     }
 }

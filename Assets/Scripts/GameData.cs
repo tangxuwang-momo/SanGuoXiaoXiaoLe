@@ -78,8 +78,8 @@ public sealed class GameData
 
     public const int standardPX = 1;        //标准每像素
     public const int maxPlayer = 8;        //最大角色人物
-    public const int heightCnt = 5;        //高度总值
-    public const int widthCnt = 5;          //宽度总值
+    public const int heightCnt = 12;        //高度总值
+    public const int widthCnt = 8;          //宽度总值
 
     public GameObject[,] allTouchNode = new GameObject[heightCnt,widthCnt];         //总触摸角色按钮
 
