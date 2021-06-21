@@ -17,10 +17,12 @@ public class GameScene : MonoBehaviour
     public GameObject uiCanvaNode;
     public GameObject StepImage;
     public GameObject StepText;
+    public GameObject addText;
 
     public Animator bgAnimator;
     public Animator imgAnimator;
     public Animator StepAnimator;
+    public Animator AddTextAnimator;
 
     bool isTouch = false;
     Vector3 touPos;
@@ -42,6 +44,7 @@ public class GameScene : MonoBehaviour
     void Awake() {
         bgAnimator = aniBg.GetComponent<Animator>();
         imgAnimator = aniImg.GetComponent<Animator>();
+        AddTextAnimator = addText.GetComponent<Animator>();
         aniNode.SetActive(false);
         GameData.Instance.initGame();
         uiCanvas.updateStepText();
@@ -291,7 +294,7 @@ public class GameScene : MonoBehaviour
                         }
                         if(calcNode != touchNode.Index || x == GameData.widthCnt - 1){
                             calcNow = true;
-                            if(x == GameData.widthCnt - 1){
+                            if(x == GameData.widthCnt - 1 && calcNode == touchNode.Index){
                                 x++;
                             }
                         }
@@ -354,7 +357,7 @@ public class GameScene : MonoBehaviour
                         }
                         if(calcNode != touchNode.Index || y == GameData.heightCnt - 1){
                             calcNow = true;
-                            if(y == GameData.heightCnt - 1){
+                            if(y == GameData.heightCnt - 1 && calcNode == touchNode.Index){
                                 y++;
                             }
                         }
@@ -460,11 +463,15 @@ public class GameScene : MonoBehaviour
         if(isEnd){
             if(hasX){
                 Invoke("setFlaseActive", 0.1f);
+                int addTextNum = GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[1].m_nodeType].m_scorePower;
                 playAni = true;
                 aniNode.SetActive(true);
                 aniImg.gameObject.GetComponent<SpriteRenderer>().sprite = resourcesData.allPlayer[GameData.Instance.CurXiaoIndex];
                 bgAnimator.Play("move", 0, 0f);
                 imgAnimator.Play("playerMove", 0, 0f);
+
+                addText.GetComponent<Text>().text = "+" + addTextNum.ToString();
+                AddTextAnimator.Play("text", 0, 0f);
             }
             else{
                 callXEnd();
