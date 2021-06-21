@@ -1,12 +1,27 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System;
+using UnityEngine.SceneManagement;
 
 public class GameScene : MonoBehaviour
 {
     public ResourcesData resourcesData;
+    public UICanvas uiCanvas;
+    public GameObject playerNode;
+    public GameObject aniNode;
+    public GameObject aniBg; 
+    public GameObject aniImg;
+    public GameObject uiCanvaNode;
+    public GameObject StepImage;
+    public GameObject StepText;
+
+    public Animator bgAnimator;
+    public Animator imgAnimator;
+    public Animator StepAnimator;
+
     bool isTouch = false;
     Vector3 touPos;
     bool canMove = false;           //选中格子是否在移动
@@ -16,6 +31,7 @@ public class GameScene : MonoBehaviour
 
     int xiaoAni = 0;
     float moveTime = 1;
+    bool playAni = false;
 
     // Start is called before the first frame update
     void Start()
@@ -24,7 +40,11 @@ public class GameScene : MonoBehaviour
     }
 
     void Awake() {
-        
+        bgAnimator = aniBg.GetComponent<Animator>();
+        imgAnimator = aniImg.GetComponent<Animator>();
+        aniNode.SetActive(false);
+        GameData.Instance.initGame();
+        uiCanvas.updateStepText();
     }
 
     // Update is called once per frame
@@ -39,7 +59,10 @@ public class GameScene : MonoBehaviour
             }
 
             GameData.Instance.allTouchNode[GameData.heightCnt / 2, GameData.widthCnt / 2].gameObject.GetComponent<TouchNode>().setLight(true);
-            GameData.Instance.GameStep = (int)AllGameStep.chooseQiDian;
+            changeStep((int)AllGameStep.chooseQiDian);
+            return;
+        }
+        else if(GameData.Instance.GameStep == (int)AllGameStep.endGame){
             return;
         }
 
@@ -48,6 +71,10 @@ public class GameScene : MonoBehaviour
         }
         else{
             //Debug.Log("点击的是屏幕（非Button属性的）");
+        }
+        
+        if(playAni){
+            return;
         }
 
         if(xiaoAni > 0){
@@ -93,7 +120,7 @@ public class GameScene : MonoBehaviour
             if(GameData.Instance.GameStep == (int)AllGameStep.chooseQiDian){
                 Destroy(GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y), (int)(GameData.Instance.ChoosePos.x)]);
                 GameData.Instance.allTouchNode[(int)(GameData.Instance.ChoosePos.y), (int)(GameData.Instance.ChoosePos.x)] = null;
-                GameData.Instance.GameStep = (int)AllGameStep.gameing;
+                changeStep((int)AllGameStep.gameing);
             }
             //移动格子
             else if(GameData.Instance.GameStep == (int)AllGameStep.gameing){
@@ -201,6 +228,19 @@ public class GameScene : MonoBehaviour
         }
 
         return false;
+    }
+
+    public void changeStep(int goStep){
+        GameData.Instance.GameStep = goStep;
+        if(goStep == (int)AllGameStep.chooseQiDian){
+            StepText.GetComponent<Text>().text = "任选一个格子作为起点";
+            StepAnimator.Play("step", 0, 0f);
+        }
+        else if(goStep == (int)AllGameStep.gameing){
+            StepText.GetComponent<Text>().text = "移动组成三个同样的格子可消除";
+            StepAnimator.Play("step", 0, 0f);
+        }
+        StepAnimator.Update(0);
     }
 
     void createAllNode(){
@@ -354,7 +394,7 @@ public class GameScene : MonoBehaviour
                             centerPos = new Vector3((startPos.x + endPos.x) / 2, (startPos.y + endPos.y) / 2, 0);
                         }
                         else{
-                            for(int i = 0; i < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType]; i++){
+                            for(int i = 0; i < GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[xIndex].m_nodeType].m_typeToCnt; i++){
                                 allXPos[posIndex++] = GameData.Instance.allXNode[xIndex].m_allNode[i];
                             }
                             for(int i = calcCnt; i > 0; i--){
@@ -367,13 +407,13 @@ public class GameScene : MonoBehaviour
                                 }
                             }
 
-                            if(calcCnt + GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType] - 1 == 5){
+                            if(calcCnt + GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[xIndex].m_nodeType].m_typeToCnt - 1 == 5){
                                 calcNodeType = (int)AllNodeType.xieWuXing;
                             }
-                            else if(calcCnt + GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType] - 1 == 6){
+                            else if(calcCnt + GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[xIndex].m_nodeType].m_typeToCnt - 1 == 6){
                                 calcNodeType = (int)AllNodeType.liuXing;
                             }
-                            else if(calcCnt + GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[xIndex].m_nodeType] - 1 == 7){
+                            else if(calcCnt + GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[xIndex].m_nodeType].m_typeToCnt - 1 == 7){
                                 calcNodeType = (int)AllNodeType.qiXing;
                             }
                         }
@@ -397,8 +437,9 @@ public class GameScene : MonoBehaviour
 
     void removeAllXNode(){
         bool isEnd = true;
+        bool hasX = false;
         for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
-            for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+            for(int j = 0; j < GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[i].m_nodeType].m_typeToCnt; j++){
                 Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
                 GameObject touchNode = GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x];
                 if(touchNode == null){
@@ -409,26 +450,116 @@ public class GameScene : MonoBehaviour
                 }
                 touchNode.transform.position = Vector3.MoveTowards(touchNode.transform.position, GameData.Instance.allXNode[i].m_centerPos, speed * Time.deltaTime); 
                 if(touchNode.transform.position == GameData.Instance.allXNode[i].m_centerPos){
+                    GameData.Instance.CurXiaoIndex = touchNode.gameObject.GetComponent<TouchNode>().Index;
                     Destroy(touchNode);
                     GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x] = null;
                 } 
             }
+            hasX = true;
         }
         if(isEnd){
+            if(hasX){
+                Invoke("setFlaseActive", 0.1f);
+                playAni = true;
+                aniNode.SetActive(true);
+                aniImg.gameObject.GetComponent<SpriteRenderer>().sprite = resourcesData.allPlayer[GameData.Instance.CurXiaoIndex];
+                bgAnimator.Play("move", 0, 0f);
+                imgAnimator.Play("playerMove", 0, 0f);
+            }
+            else{
+                callXEnd();
+            }
+        }
+    }
+
+    void setFlaseActive(){
+        playerNode.SetActive(false);
+        StepImage.transform.localScale = new Vector3(1, 0, 1);
+        uiCanvaNode.SetActive(false);
+    }
+
+    public void callXEnd(){
+        playerNode.SetActive(true);
+        uiCanvaNode.SetActive(true);
+        aniNode.SetActive(false);
+        playAni = false;
             for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
-                for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+                for(int j = 0; j < GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[i].m_nodeType].m_typeToCnt; j++){
                     Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
                     createNewNode((int)tochNodePos.x, (int)tochNodePos.y);
+                    while(true){
+                        bool isSame = isSameNode((int)tochNodePos.x, (int)tochNodePos.y);
+                        if(!isSame){
+                            break;
+                        }
+                        Destroy( GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x]);
+                        GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x] = null;
+                        createNewNode((int)tochNodePos.x, (int)tochNodePos.y);
+                    }
+                }
+                if(GameData.Instance.GameStep == (int)AllGameStep.gameing){
+                    GameData.Instance.Score += GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[i].m_nodeType].m_scorePower;
+                    uiCanvas.updateText();
                 }
             }
             xiaoAni --;
             GameData.Instance.CalcXNodeIndex = 0;
+            GameData.Instance.StepCnt ++;
+            uiCanvas.updateStepText();
+            if(GameData.Instance.StepCnt >= GameData.maxStepCnt){
+                //游戏结束
+                Debug.Log("GAME OVER!");
+                changeStep((int)AllGameStep.endGame);
+                GameData.Instance.TotalScore += GameData.Instance.Score;
+
+                //GameObject tipNode = Resources.Load<GameObject>("Prefabs/tip");
+                //GameObject createObject = GameObject.Instantiate(playerNode, new Vector3(0, 0, 0), Quaternion.identity, uiCanvaNode.transform);
+
+                //SceneManager.LoadScene("TipScene", LoadSceneMode.Additive);
+
+                MessageBox.Instance.show("招兵结束！\n本次共招收人马\n" + (GameData.Instance.Score).ToString(), uiCanvaNode.transform, ()=>{
+                    SceneManager.LoadScene("LobbyScene");
+                });
+            }
+    }
+
+    bool isSameNode(int x, int y){
+        int index = GameData.Instance.allTouchNode[y, x].gameObject.GetComponent<TouchNode>().Index;
+        bool isSame = false;
+        //上
+        if(y + 1 < GameData.heightCnt && GameData.Instance.allTouchNode[y + 1, x] != null){
+            TouchNode touchNode = GameData.Instance.allTouchNode[y + 1, x].gameObject.GetComponent<TouchNode>();
+            if(index == touchNode.Index){
+                isSame = true;
+            }
         }
+        //下
+        if(y - 1 >= 0 && GameData.Instance.allTouchNode[y - 1, x] != null){
+            TouchNode touchNode = GameData.Instance.allTouchNode[y - 1, x].gameObject.GetComponent<TouchNode>();
+            if(index == touchNode.Index){
+                isSame = true;
+            }
+        }
+        //左
+        if(x - 1 >= 0 && GameData.Instance.allTouchNode[y, x - 1] != null){
+            TouchNode touchNode = GameData.Instance.allTouchNode[y, x - 1].gameObject.GetComponent<TouchNode>();
+            if(index == touchNode.Index){
+                isSame = true;
+            }
+        }
+        //右
+        if(x + 1 < GameData.widthCnt && GameData.Instance.allTouchNode[y, x + 1] != null){
+            TouchNode touchNode = GameData.Instance.allTouchNode[y, x + 1].gameObject.GetComponent<TouchNode>();
+            if(index == touchNode.Index){
+                isSame = true;
+            }
+        }
+        return isSame;
     }
 
     void removeAllXNodeStr(){
         for(int i = 1; i <= GameData.Instance.CalcXNodeIndex; i++){
-            for(int j = 0; j < GameData.Instance.nodeTypeToCnt[GameData.Instance.allXNode[i].m_nodeType]; j++){
+            for(int j = 0; j < GameData.Instance.allNodeTypeData[GameData.Instance.allXNode[i].m_nodeType].m_typeToCnt; j++){
                 Vector3 tochNodePos = GameData.Instance.allXNode[i].m_allNode[j];
                 GameObject touchNode = GameData.Instance.allTouchNode[(int)tochNodePos.y, (int)tochNodePos.x];
                 Destroy(touchNode);

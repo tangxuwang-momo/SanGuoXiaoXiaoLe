@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class TouchNode : MonoBehaviour
 {
-    public GameObject light;
+    public GameObject lightImg;
 
-    public int index;
+    private int index;
     public int Index{get; set;}
 
     public Vector3 pos;
     public Vector3 Pos{get; set;}
     
     public void setLight(bool isLight){
-        light.gameObject.active = isLight;
+        lightImg.gameObject.SetActive(isLight);
         if(isLight){
             GameData.Instance.ChoosePos = Pos;
             Vector3 newPos = this.transform.position;

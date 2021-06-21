@@ -6,14 +6,12 @@ public class ResourcesData : MonoBehaviour
 {
     
     GameObject playerNode;
-    Sprite[] allPlayer = new Sprite[GameData.maxPlayer + 1];
-    Sprite onePlayer;
+    public Sprite[] allPlayer = new Sprite[GameData.maxPlayer + 1];
 
     public GameObject RootNode;
 
     void Awake() {
         playerNode = Resources.Load<GameObject>("Prefabs/PlayerNode");
-        onePlayer = Resources.Load<Sprite>("Images/player/player_2");
         for(int i = 1; i<= GameData.maxPlayer; i++){
             allPlayer[i] = Resources.Load<Sprite>("Images/player/player_" + i);
         }
