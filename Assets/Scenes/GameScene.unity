@@ -237,7 +237,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &96005495
 Transform:
   m_ObjectHideFlags: 0
@@ -997,7 +997,7 @@ GameObject:
   - component: {fileID: 577885743}
   - component: {fileID: 577885745}
   m_Layer: 5
-  m_Name: Text
+  m_Name: addText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1019,7 +1019,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -136}
+  m_AnchoredPosition: {x: 0, y: -244}
   m_SizeDelta: {x: 250, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &577885743
@@ -1035,7 +1035,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_Color: {r: 0.7264151, g: 0.44585854, b: 0.065103225, a: 1}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1247,9 +1247,11 @@ MonoBehaviour:
   uiCanvaNode: {fileID: 476266035}
   StepImage: {fileID: 1977482817}
   StepText: {fileID: 674945610}
+  addText: {fileID: 577885741}
   bgAnimator: {fileID: 0}
   imgAnimator: {fileID: 0}
   StepAnimator: {fileID: 1977482821}
+  AddTextAnimator: {fileID: 0}
 --- !u!114 &915541653
 MonoBehaviour:
   m_ObjectHideFlags: 0

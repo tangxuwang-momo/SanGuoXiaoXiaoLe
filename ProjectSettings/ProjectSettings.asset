@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: YeZiTang
-  productName: SanGuoXiaoXiaoLe
+  productName: "\u4E09\u56FD\u79FB\u52A8\u6D88\u6D88\u4E50"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 1, g: 1, b: 1, a: 1}
@@ -176,7 +176,8 @@ PlayerSettings:
   resolutionScalingMode: 0
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
-  applicationIdentifier: {}
+  applicationIdentifier:
+    iPhone: com.YeZiTang.SanGuoXiaoXiaoLe
   buildNumber:
     iPhone: 1.0.0
   AndroidBundleVersionCode: 1
